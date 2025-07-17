@@ -32,7 +32,7 @@ app.get("/tasks", authenticateToken, async (req, res) => {
         const query = `
             SELECT 
                 t.task_id, t.task_name, t.description, t.status, t.priority,
-                t.start_time, t.end_time, o.operator_id, o.operator_name
+                t.start_time, t.end_time,t.machine_id, o.operator_id, o.operator_name
             FROM task t
             JOIN operator o ON t.operator_id = o.operator_id
             WHERE t.operator_id = $1
