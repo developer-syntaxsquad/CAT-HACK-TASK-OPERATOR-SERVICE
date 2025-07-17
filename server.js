@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const { Client } = require("pg");
+const authenticateToken = require("./middleware/authMiddleware");
 
 const PORT = process.env.PORT || 5000;
 
@@ -23,8 +24,10 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.status(200).json({ message: "Server running successfully" });
 });
-//get task
-app.get("/tasks", async (req, res) => {
+//get task//get-task with operator_id
+app.get("/tasks", authenticateToken, async (req, res) => {
+    const operator_id = req.operator_id;
+
     try {
         const query = `
             SELECT 
@@ -32,14 +35,16 @@ app.get("/tasks", async (req, res) => {
                 t.start_time, t.end_time, o.operator_id, o.operator_name
             FROM task t
             JOIN operator o ON t.operator_id = o.operator_id
+            WHERE t.operator_id = $1
         `;
-        const result = await client.query(query);
-        res.status(200).json(result.rows);
+        const result = await client.query(query, [operator_id]);
+        res.status(200).json({ tasks: result.rows });
     } catch (error) {
         console.error("Error fetching tasks:", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
 //post-task
 app.post("/add-task", async (req, res) => {
     try {
@@ -214,7 +219,6 @@ app.get("/get-machines/:machine_id", async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server started on http://localhost:${PORT}`);
